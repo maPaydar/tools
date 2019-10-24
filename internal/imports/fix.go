@@ -594,6 +594,32 @@ func getAllCandidates(filename string, env *ProcessEnv) ([]ImportFix, error) {
 	for importPath := range stdlib {
 		paths = append(paths, importPath)
 	}
+
+	// Get the packages in current workdir
+	//files, err := ioutil.ReadDir(env.WorkingDir)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	strs := strings.Split(env.WorkingDir, "/")
+	rootPkg := strs[len(strs)-1]
+	//for _, f := range files {
+	//	if f.IsDir() {
+	//		paths = append(paths, rootPkg + "/" + f.Name())
+	//	}
+	//}
+	dirs, _ := filePathWalkDir(env.WorkingDir)
+	for _, f := range dirs {
+		idx := strings.Index(f, "vendor")
+		if idx >= 0 {
+			if idx+7 < len(f) {
+				f = f[idx+7:]
+			}
+		} else {
+			idx = strings.Index(f, rootPkg)
+			f = f[idx:]
+		}
+		paths = append(paths, f)
+	}
 	sort.Strings(paths)
 
 	var imports []ImportFix

@@ -21,6 +21,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -104,12 +106,37 @@ func ApplyFixes(fixes []*ImportFix, filename string, src []byte, opt *Options) (
 
 // GetAllCandidates gets all of the standard library candidate packages to import in
 // sorted order on import path.
-func GetAllCandidates(filename string, opt *Options) (pkgs []ImportFix, err error) {
-	_, opt, err = initialize(filename, []byte{}, opt)
+func GetAllCandidates(filename string, opt *Options) (pkgs []*ImportFix, err error) {
+	src, opt, err := initialize(filename, []byte{}, opt)
 	if err != nil {
 		return nil, err
 	}
-	return getAllCandidates(filename, opt.Env)
+
+	fileSet := token.NewFileSet()
+	file, _, err := parse(fileSet, filename, src, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	return getFixes(fileSet, file, filename, opt.Env)
+	//	return getAllCandidates(filename, opt.Env)
+}
+
+var pathsCache = map[string][]string{}
+
+func filePathWalkDir(root string) ([]string, error) {
+	if files, ok := pathsCache[root]; ok {
+		return files, nil
+	}
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			files = append(files, path)
+		}
+		return nil
+	})
+	pathsCache[root] = files
+	return files, err
 }
 
 // initialize sets the values for opt and src.

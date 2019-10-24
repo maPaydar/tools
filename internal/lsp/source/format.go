@@ -241,7 +241,7 @@ func AllImportsFixes(ctx context.Context, view View, f File) (edits []protocol.T
 // In addition to returning the result of applying all edits,
 // it returns a list of fixes that could be applied to the file, with the
 // corresponding TextEdits that would be needed to apply that fix.
-func CandidateImports(ctx context.Context, view View, filename string) (pkgs []imports.ImportFix, err error) {
+func CandidateImports(ctx context.Context, view View, filename string) (pkgs []*imports.ImportFix, err error) {
 	ctx, done := trace.StartSpan(ctx, "source.CandidateImports")
 	defer done()
 
